@@ -19,15 +19,12 @@ void EqBand::reset() {
         filter.reset();
 }
 
-void EqBand::updateCoefficients(const util::Params::BandParams& params, double sampleRate) {
+void EqBand::updateCoefficients(const util::Params::BandParams& params, double sampleRate, int numSamples) {
     sampleRate_ = sampleRate;
 
     // We expect params pointers to be valid.
     const bool isEnabled = params.enabled->load(std::memory_order_relaxed) > 0.5f;
     enabled_ = isEnabled;
-
-    if (!enabled_)
-        return;
 
     const auto type = static_cast<util::FilterType>(static_cast<int>(params.type->load(std::memory_order_relaxed)));
     const float freq = params.freq->load(std::memory_order_relaxed);
@@ -43,10 +40,15 @@ void EqBand::updateCoefficients(const util::Params::BandParams& params, double s
     smoothedGain_.setTargetValue(gain);
     smoothedQ_.setTargetValue(clampedQ);
 
-    // Get current interpolated values
-    const float currentFreq = smoothedFreq_.getNextValue();
-    const float currentGain = juce::Decibels::decibelsToGain(smoothedGain_.getNextValue());
-    const float currentQ = smoothedQ_.getNextValue();
+    // Advance smoothing by the block length so behavior is block-size independent.
+    const int samplesToAdvance = juce::jmax(numSamples, 0);
+    const float currentFreq = samplesToAdvance > 0 ? smoothedFreq_.skip(samplesToAdvance) : smoothedFreq_.getCurrentValue();
+    const float currentGain = juce::Decibels::decibelsToGain(samplesToAdvance > 0 ? smoothedGain_.skip(samplesToAdvance)
+                                                                                   : smoothedGain_.getCurrentValue());
+    const float currentQ = samplesToAdvance > 0 ? smoothedQ_.skip(samplesToAdvance) : smoothedQ_.getCurrentValue();
+
+    if (!enabled_)
+        return;
 
     std::array<float, 6> coeffs{1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
 

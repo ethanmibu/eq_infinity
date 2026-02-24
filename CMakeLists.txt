@@ -55,10 +55,10 @@ juce_add_plugin(EQInfinity
     COPY_PLUGIN_AFTER_BUILD ${EQINF_COPY_PLUGIN_AFTER_BUILD}
 
     PLUGIN_MANUFACTURER_CODE EqIn
-    PLUGIN_CODE GrEQ
+    PLUGIN_CODE EqI8
 
     FORMATS ${EQINF_PLUGIN_FORMATS}
-    PRODUCT_NAME "EQInfinity"
+    PRODUCT_NAME "EQ Infinity"
 )
 
 target_sources(EQInfinity PRIVATE
@@ -72,6 +72,12 @@ target_sources(EQInfinity PRIVATE
     src/dsp/EqBand.h
     src/dsp/EqEngine.cpp
     src/dsp/EqEngine.h
+    src/dsp/ResponseCurve.cpp
+    src/dsp/ResponseCurve.h
+    src/ui/EqPlotComponent.cpp
+    src/ui/EqPlotComponent.h
+    src/ui/SpectrumAnalyzer.cpp
+    src/ui/SpectrumAnalyzer.h
 )
 
 target_include_directories(EQInfinity PRIVATE

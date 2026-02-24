@@ -1,41 +1,147 @@
 #include "Params.h"
 
 namespace util {
+namespace {
+
+juce::String bandPrefixWithBank(int bandNum, Bank bank) {
+    const char bankChar = bank == Bank::A ? 'a' : 'b';
+    return "b" + juce::String(bandNum) + "_" + juce::String::charToString(bankChar) + "_";
+}
+
+} // namespace
+
+juce::String Params::IDs::enabled(int bandNum, Bank bank) {
+    return bandPrefixWithBank(bandNum, bank) + "enabled";
+}
+
+juce::String Params::IDs::type(int bandNum, Bank bank) {
+    return bandPrefixWithBank(bandNum, bank) + "type";
+}
+
+juce::String Params::IDs::freq(int bandNum, Bank bank) {
+    return bandPrefixWithBank(bandNum, bank) + "freq";
+}
+
+juce::String Params::IDs::gain(int bandNum, Bank bank) {
+    return bandPrefixWithBank(bandNum, bank) + "gain";
+}
+
+juce::String Params::IDs::q(int bandNum, Bank bank) {
+    return bandPrefixWithBank(bandNum, bank) + "q";
+}
+
+juce::String Params::IDs::slope(int bandNum, Bank bank) {
+    return bandPrefixWithBank(bandNum, bank) + "slope";
+}
+
 Params::Params(juce::AudioProcessor& processor) : apvts(processor, nullptr, "PARAMS", createLayout()) {
     // Cache raw parameter pointers for RT access (no string lookups in processBlock)
+    editTarget_ = apvts.getRawParameterValue(IDs::editTarget);
+    stereoMode_ = apvts.getRawParameterValue(IDs::stereoMode);
+    hqMode_ = apvts.getRawParameterValue(IDs::hqMode);
     outputGainDb_ = apvts.getRawParameterValue(IDs::outputGain);
+    jassert(editTarget_ != nullptr);
+    jassert(stereoMode_ != nullptr);
+    jassert(hqMode_ != nullptr);
     jassert(outputGainDb_ != nullptr);
 
-    for (int i = 0; i < NumBands; ++i) {
-        const int bandNum = i + 1;
-        const auto index = static_cast<std::size_t>(i);
-        bands_[index].enabled = apvts.getRawParameterValue(IDs::enabled(bandNum));
-        bands_[index].type = apvts.getRawParameterValue(IDs::type(bandNum));
-        bands_[index].freq = apvts.getRawParameterValue(IDs::freq(bandNum));
-        bands_[index].gain = apvts.getRawParameterValue(IDs::gain(bandNum));
-        bands_[index].q = apvts.getRawParameterValue(IDs::q(bandNum));
-        bands_[index].slope = apvts.getRawParameterValue(IDs::slope(bandNum));
+    auto cacheBandPointers = [this](std::array<BandParams, NumBands>& destination, Bank bank) {
+        for (int i = 0; i < NumBands; ++i) {
+            const int bandNum = i + 1;
+            const auto index = static_cast<std::size_t>(i);
+            destination[index].enabled = apvts.getRawParameterValue(IDs::enabled(bandNum, bank));
+            destination[index].type = apvts.getRawParameterValue(IDs::type(bandNum, bank));
+            destination[index].freq = apvts.getRawParameterValue(IDs::freq(bandNum, bank));
+            destination[index].gain = apvts.getRawParameterValue(IDs::gain(bandNum, bank));
+            destination[index].q = apvts.getRawParameterValue(IDs::q(bandNum, bank));
+            destination[index].slope = apvts.getRawParameterValue(IDs::slope(bandNum, bank));
 
-        jassert(bands_[index].enabled != nullptr);
-        jassert(bands_[index].type != nullptr);
-        jassert(bands_[index].freq != nullptr);
-        jassert(bands_[index].gain != nullptr);
-        jassert(bands_[index].q != nullptr);
-        jassert(bands_[index].slope != nullptr);
-    }
+            jassert(destination[index].enabled != nullptr);
+            jassert(destination[index].type != nullptr);
+            jassert(destination[index].freq != nullptr);
+            jassert(destination[index].gain != nullptr);
+            jassert(destination[index].q != nullptr);
+            jassert(destination[index].slope != nullptr);
+        }
+    };
+
+    cacheBandPointers(bandsA_, Bank::A);
+    cacheBandPointers(bandsB_, Bank::B);
+
 }
 
 float Params::getOutputGainDb() const noexcept {
     return outputGainDb_->load(std::memory_order_relaxed);
 }
 
-const Params::BandParams& Params::getBand(int index) const noexcept {
+StereoMode Params::getStereoMode() const noexcept {
+    return static_cast<StereoMode>(static_cast<int>(stereoMode_->load(std::memory_order_relaxed)));
+}
+
+HQMode Params::getHQMode() const noexcept {
+    return static_cast<HQMode>(static_cast<int>(hqMode_->load(std::memory_order_relaxed)));
+}
+
+bool Params::isHQEnabled() const noexcept {
+    return getHQMode() == HQMode::Oversampling2x;
+}
+
+EditTarget Params::getEditTarget() const noexcept {
+    return static_cast<EditTarget>(static_cast<int>(editTarget_->load(std::memory_order_relaxed)));
+}
+
+const Params::BandParams& Params::getBand(int index, Bank bank) const noexcept {
     jassert(index >= 0 && index < NumBands);
-    return bands_[static_cast<std::size_t>(index)];
+    return (bank == Bank::A ? bandsA_ : bandsB_)[static_cast<std::size_t>(index)];
+}
+
+int Params::defaultTypeIndexForBand(int bandNum) noexcept {
+    if (bandNum == 1)
+        return static_cast<int>(FilterType::HighPass);
+
+    if (bandNum == NumBands)
+        return static_cast<int>(FilterType::LowPass);
+
+    return static_cast<int>(FilterType::Peak);
+}
+
+float Params::defaultFrequencyHzForBand(int bandNum) noexcept {
+    switch (bandNum) {
+    case 1:
+        return 50.0f;
+    case 2:
+        return 125.0f;
+    case 3:
+        return 250.0f;
+    case 4:
+        return 500.0f;
+    case 5:
+        return 1000.0f;
+    case 6:
+        return 2000.0f;
+    case 7:
+        return 4000.0f;
+    case 8:
+        return 10000.0f;
+    default:
+        return 1000.0f;
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Params::createLayout() {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID(IDs::editTarget, 1), "Edit Target", juce::StringArray{"Link", "A", "B"},
+        static_cast<int>(EditTarget::Link)));
+
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::stereoMode, 1), "Stereo Mode",
+                                                                  juce::StringArray{"Stereo", "Mid/Side", "Left/Right"},
+                                                                  static_cast<int>(StereoMode::Stereo)));
+
+    params.push_back(
+        std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::hqMode, 1), "Quality",
+                                                     juce::StringArray{"Eco", "HQ (2x)"}, static_cast<int>(HQMode::Off)));
 
     // Output Gain
     params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::outputGain, 1), "Output Gain",
@@ -47,61 +153,44 @@ juce::AudioProcessorValueTreeState::ParameterLayout Params::createLayout() {
     // Slope choices
     juce::StringArray slopeChoices{"12 dB/oct", "24 dB/oct", "36 dB/oct", "48 dB/oct"};
 
-    for (int i = 0; i < NumBands; ++i) {
-        const int bandNum = i + 1;
-        const juce::String prefix = "Band " + juce::String(bandNum) + " ";
+    auto addBandParametersForBank = [&](int bandNum, Bank bank) {
+        const juce::String bankLabel = bank == Bank::A ? "A" : "B";
+        const juce::String prefix = "Band " + juce::String(bandNum) + " " + bankLabel + " ";
 
-        // Default to a sane state: only a couple enabled initially, or spaced out
-        const bool defaultEnabled = (i == 0 || i == NumBands - 1);
-        int defaultType = (i == 0) ? 3 : (i == NumBands - 1) ? 4 : 0; // HighPass, LowPass, Peak
+        const bool defaultEnabled = false;
+        const int defaultType = defaultTypeIndexForBand(bandNum);
+        const float defaultFreq = defaultFrequencyHzForBand(bandNum);
 
-        // Distribute default frequencies
-        float defaultFreq = 1000.0f;
-        if (i == 0)
-            defaultFreq = 50.0f;
-        else if (i == 1)
-            defaultFreq = 125.0f;
-        else if (i == 2)
-            defaultFreq = 250.0f;
-        else if (i == 3)
-            defaultFreq = 500.0f;
-        else if (i == 4)
-            defaultFreq = 1000.0f;
-        else if (i == 5)
-            defaultFreq = 2000.0f;
-        else if (i == 6)
-            defaultFreq = 4000.0f;
-        else if (i == 7)
-            defaultFreq = 10000.0f;
-
-        params.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID(IDs::enabled(bandNum), 1),
+        params.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID(IDs::enabled(bandNum, bank), 1),
                                                                     prefix + "Enabled", defaultEnabled));
 
-        params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::type(bandNum), 1),
+        params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::type(bandNum, bank), 1),
                                                                       prefix + "Type", typeChoices, defaultType));
 
-        // Frequency (logarithmic scale)
         juce::NormalisableRange<float> freqRange(20.0f, 20000.0f, 0.1f);
         freqRange.setSkewForCentre(1000.0f);
-        params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::freq(bandNum), 1),
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::freq(bandNum, bank), 1),
                                                                      prefix + "Freq", freqRange, defaultFreq));
 
-        // Gain
         params.push_back(
-            std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::gain(bandNum), 1), prefix + "Gain",
-                                                        juce::NormalisableRange<float>(-24.0f, 24.0f, 0.01f), 0.0f));
+            std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::gain(bandNum, bank), 1), prefix + "Gain",
+                                                        juce::NormalisableRange<float>(-24.0f, 24.0f, 0.01f),
+                                                        defaultGainDb()));
 
-        // Q (logarithmic scale)
         juce::NormalisableRange<float> qRange(0.1f, 18.0f, 0.01f);
         qRange.setSkewForCentre(1.0f);
-        params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::q(bandNum), 1),
-                                                                     prefix + "Q", qRange,
-                                                                     1.0f)); // Default Q: 1.0
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::q(bandNum, bank), 1),
+                                                                     prefix + "Q", qRange, defaultQ()));
 
-        // Slope choice (0 = 12dB, 1 = 24dB, etc.)
-        params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::slope(bandNum), 1),
+        params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::slope(bandNum, bank), 1),
                                                                       prefix + "Slope", slopeChoices,
-                                                                      0)); // Default 12 dB/oct
+                                                                      defaultSlopeIndex()));
+    };
+
+    for (int i = 0; i < NumBands; ++i) {
+        const int bandNum = i + 1;
+        addBandParametersForBank(bandNum, Bank::A);
+        addBandParametersForBank(bandNum, Bank::B);
     }
 
     return {params.begin(), params.end()};

@@ -6,6 +6,22 @@
 
 Current implementation includes Milestone 2 (APVTS parameter system) and Milestone 3 DSP foundations.
 
+## Current Feature Set
+
+- 8-band EQ with draggable nodes and bottom-strip per-band controls
+- Node click auto-enables the band
+- Node double-click resets the band to defaults
+- Drag modifiers:
+  - `Shift`: fine frequency/gain adjustment
+  - `Option/Alt`: Q adjustment via vertical drag
+  - `Command` (macOS) / `Ctrl` (Windows): hold for temporary band solo audition
+- Global modes:
+  - `Stereo` (default), `Mid/Side`, or `Left/Right`
+  - Quality `Eco` or `HQ (2x)` oversampling
+- Edit targeting:
+  - `Link` (write both A/B banks)
+  - side-specific `A` / `B` (labels adapt to `L/R` or `M/S` by mode)
+
 ## Prerequisites
 
 - CMake 3.21+
@@ -95,5 +111,7 @@ ctest --test-dir build --output-on-failure
 
 ## License
 
-- `LICENSE` in this repo is a project placeholder license.
+- This project is licensed under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html).
+- See `LICENSE` for the full text.
+- If you distribute or provide network access to modified versions, ensure AGPL-3.0 source-availability requirements are met.
 - JUCE is a separate dependency with its own licensing terms.

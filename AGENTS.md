@@ -25,6 +25,10 @@ This repo should result in:
 - Builds produce: Standalone app + VST3 (and AU on macOS)
 - 8 bands with per-band: Type, Freq, Gain (if applicable), Q (if applicable), Slope (cuts), Enabled
 - Global output gain
+- Stereo modes:
+  - `Stereo` (linked)
+  - `Left/Right` (true dual-mono)
+  - `Mid/Side` (true dual-mono in M/S domain)
 - A simple EQ graph UI with draggable nodes
 - (Phase 2) FFT spectrum analyzer overlay
 
@@ -164,6 +168,39 @@ Deliverable: stable analyzer without audio thread issues.
   - plugin scan paths
   - common “plugin not showing” fixes
 
+### Milestone 7 — Stereo Routing & Dual-Mono
+- Add dual parameter-bank architecture for all band parameters:
+  - Bank `A` and Bank `B`
+  - Include per-band: enabled, type, freq, gain, q, slope
+- Implement routing matrix by mode:
+  - `Stereo`: both channels use Bank `A` (linked behavior)
+  - `Left/Right`: Left uses Bank `A`, Right uses Bank `B`
+  - `Mid/Side`: Mid uses Bank `A`, Side uses Bank `B`
+- Add edit-target selector:
+  - `Link` (writes both A+B)
+  - `A` only
+  - `B` only
+- Ensure no channel cross-talk in `Left/Right` and `Mid/Side`.
+
+Deliverable: true dual-mono operation for `Left/Right` and `Mid/Side` with stable host automation/state.
+
+### Milestone 8 — Node & Control Interaction Parity
+- Node interaction:
+  - Clicking a node selects and enables only that band
+  - Dragging modifies only the selected/clicked node
+  - Double-click resets only the selected node/band to defaults for current edit target
+  - Keep modifier behaviors:
+    - `Shift` fine adjustment
+    - `Alt/Option` for Q adjustment during drag
+- Bottom-strip control behavior:
+  - All controls become edit-target aware (`Link`, `A`, `B`)
+  - No unintended updates to non-target bank or non-selected band
+- Visualization:
+  - Add readable numerical axis markers for frequency and gain
+  - In dual-mono modes, support distinct A/B response traces (or clearly documented single-trace fallback until complete)
+
+Deliverable: deterministic node/control behavior, no cross-band motion bugs, and clear axis readability.
+
 ## Coding standards
 - C++17 minimum.
 - No dynamic allocations in `processBlock`.
@@ -171,6 +208,9 @@ Deliverable: stable analyzer without audio thread issues.
 - Use atomics or lock-free FIFOs for analyzer data transfer.
 - Keep DSP separate from UI (`src/dsp` vs `src/ui`).
 - Keep parameter IDs centralized in `Params`.
+- In `Left/Right` mode, maintain strict channel isolation (no L↔R parameter bleed or audio cross-talk).
+- In `Mid/Side` mode, maintain strict Mid/Side isolation except intentional encode/decode transforms.
+- Any mode switch must avoid obvious clicks/pops and preserve real-time safety.
 
 ## Testing checklist (agent should run)
 - Sample rates: 44.1k, 48k, 96k
@@ -179,6 +219,17 @@ Deliverable: stable analyzer without audio thread issues.
 - Save project → reopen: settings persist
 - Mono and stereo correctness
 - CPU sanity: analyzer does not spike CPU; silence input does not cause denormals
+- Dual-mono correctness:
+  - In `Left/Right`, left-only changes affect only left output, right-only changes affect only right output
+  - In `Mid/Side`, Mid-only and Side-only changes map correctly through encode/decode
+- Edit-target correctness:
+  - `Link` writes both banks
+  - `A` writes only bank A
+  - `B` writes only bank B
+- Interaction regressions:
+  - Selecting one node does not move or modify another node
+  - Enabling/selecting one band does not toggle band 1 unintentionally
+  - Axis labels remain legible across supported plugin sizes
 
 ## Deliverables for each PR/change
 - Clear commit messages

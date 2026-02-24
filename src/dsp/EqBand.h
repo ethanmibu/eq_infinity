@@ -13,7 +13,7 @@ class EqBand {
     void reset();
 
     // Call this before processing a block to apply updated parameters.
-    void updateCoefficients(const util::Params::BandParams& params, double sampleRate);
+    void updateCoefficients(const util::Params::BandParams& params, double sampleRate, int numSamples);
 
     // Bypasses internal processing when the band is disabled.
     template <typename ProcessContext> void process(const ProcessContext& context) {
