@@ -105,8 +105,8 @@ float computeRms(const juce::AudioBuffer<float>& buffer, int channel) {
     return static_cast<float>(std::sqrt(sumSquares / static_cast<double>(buffer.getNumSamples())));
 }
 
-float processToneAndMeasureRms(::dsp::EqBand& band, util::Params::BandParams params, double sampleRate, double frequencyHz,
-                               int blocksToProcess) {
+float processToneAndMeasureRms(::dsp::EqBand& band, util::Params::BandParams params, double sampleRate,
+                               double frequencyHz, int blocksToProcess) {
     constexpr int blockSize = 256;
     juce::AudioBuffer<float> buffer(2, blockSize);
     double phase = 0.0;
@@ -130,8 +130,8 @@ bool testParamsIncludeMilestone2Ids() {
     DummyProcessor processor;
     util::Params params(processor);
 
-    bool ok = expect(params.apvts.getParameter(util::Params::IDs::editTarget) != nullptr,
-                     "Missing edit_target parameter");
+    bool ok =
+        expect(params.apvts.getParameter(util::Params::IDs::editTarget) != nullptr, "Missing edit_target parameter");
     ok &= expect(params.apvts.getParameter(util::Params::IDs::stereoMode) != nullptr, "Missing stereo_mode parameter");
     ok &= expect(params.apvts.getParameter(util::Params::IDs::hqMode) != nullptr, "Missing hq_mode parameter");
     ok &= expect(params.apvts.getParameter(util::Params::IDs::outputGain) != nullptr, "Missing out_gain parameter");

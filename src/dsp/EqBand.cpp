@@ -42,9 +42,10 @@ void EqBand::updateCoefficients(const util::Params::BandParams& params, double s
 
     // Advance smoothing by the block length so behavior is block-size independent.
     const int samplesToAdvance = juce::jmax(numSamples, 0);
-    const float currentFreq = samplesToAdvance > 0 ? smoothedFreq_.skip(samplesToAdvance) : smoothedFreq_.getCurrentValue();
+    const float currentFreq =
+        samplesToAdvance > 0 ? smoothedFreq_.skip(samplesToAdvance) : smoothedFreq_.getCurrentValue();
     const float currentGain = juce::Decibels::decibelsToGain(samplesToAdvance > 0 ? smoothedGain_.skip(samplesToAdvance)
-                                                                                   : smoothedGain_.getCurrentValue());
+                                                                                  : smoothedGain_.getCurrentValue());
     const float currentQ = samplesToAdvance > 0 ? smoothedQ_.skip(samplesToAdvance) : smoothedQ_.getCurrentValue();
 
     if (!enabled_)

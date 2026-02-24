@@ -410,7 +410,8 @@ void EqPlotComponent::resetBandToDefaults(int bandIndex) {
 
     const int bandNum = bandIndex + 1;
     setBandFieldValueForEditTarget(bandNum, BandField::Enabled, 1.0f);
-    setBandFieldValueForEditTarget(bandNum, BandField::Type, static_cast<float>(util::Params::defaultTypeIndexForBand(bandNum)));
+    setBandFieldValueForEditTarget(bandNum, BandField::Type,
+                                   static_cast<float>(util::Params::defaultTypeIndexForBand(bandNum)));
     setBandFieldValueForEditTarget(bandNum, BandField::Frequency, util::Params::defaultFrequencyHzForBand(bandNum));
     setBandFieldValueForEditTarget(bandNum, BandField::Gain, util::Params::defaultGainDb());
     setBandFieldValueForEditTarget(bandNum, BandField::Q, util::Params::defaultQ());

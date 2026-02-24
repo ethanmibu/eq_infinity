@@ -51,7 +51,8 @@ void EQInfinityAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBl
     eqEngineA_.prepare(processSpec_);
     eqEngineB_.prepare(processSpec_);
 
-    const auto numProcessingChannels = static_cast<std::size_t>(juce::jmax(1, static_cast<int>(processSpec_.numChannels)));
+    const auto numProcessingChannels =
+        static_cast<std::size_t>(juce::jmax(1, static_cast<int>(processSpec_.numChannels)));
     oversampling2x_ = std::make_unique<juce::dsp::Oversampling<float>>(
         numProcessingChannels, 1, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true, false);
     oversampling2x_->reset();

@@ -159,7 +159,8 @@ void EQInfinityAudioProcessorEditor::timerCallback() {
             destination->setValueNotifyingHost(destination->convertTo0to1(sourceValue));
         };
 
-        mirrorField(util::Params::IDs::enabled(bandNum, util::Bank::A), util::Params::IDs::enabled(bandNum, util::Bank::B));
+        mirrorField(util::Params::IDs::enabled(bandNum, util::Bank::A),
+                    util::Params::IDs::enabled(bandNum, util::Bank::B));
         mirrorField(util::Params::IDs::type(bandNum, util::Bank::A), util::Params::IDs::type(bandNum, util::Bank::B));
         mirrorField(util::Params::IDs::freq(bandNum, util::Bank::A), util::Params::IDs::freq(bandNum, util::Bank::B));
         mirrorField(util::Params::IDs::gain(bandNum, util::Bank::A), util::Params::IDs::gain(bandNum, util::Bank::B));
@@ -284,8 +285,8 @@ void EQInfinityAudioProcessorEditor::enforceStereoEditTargetPolicy() {
     if (processor_.params().getStereoMode() != util::StereoMode::Stereo)
         return;
 
-    auto* editTargetParam =
-        dynamic_cast<juce::RangedAudioParameter*>(processor_.params().apvts.getParameter(util::Params::IDs::editTarget));
+    auto* editTargetParam = dynamic_cast<juce::RangedAudioParameter*>(
+        processor_.params().apvts.getParameter(util::Params::IDs::editTarget));
     if (editTargetParam == nullptr)
         return;
 
@@ -320,11 +321,14 @@ void EQInfinityAudioProcessorEditor::rebuildSelectedBandAttachments() {
     const auto bank = getAttachmentBank();
     bandEnableAttachment_ =
         std::make_unique<ButtonAttachment>(apvts, util::Params::IDs::enabled(bandNum, bank), bandEnableToggle_);
-    bandTypeAttachment_ = std::make_unique<ComboBoxAttachment>(apvts, util::Params::IDs::type(bandNum, bank), bandTypeBox_);
+    bandTypeAttachment_ =
+        std::make_unique<ComboBoxAttachment>(apvts, util::Params::IDs::type(bandNum, bank), bandTypeBox_);
     bandSlopeAttachment_ =
         std::make_unique<ComboBoxAttachment>(apvts, util::Params::IDs::slope(bandNum, bank), bandSlopeBox_);
-    bandFreqAttachment_ = std::make_unique<SliderAttachment>(apvts, util::Params::IDs::freq(bandNum, bank), bandFreqSlider_);
-    bandGainAttachment_ = std::make_unique<SliderAttachment>(apvts, util::Params::IDs::gain(bandNum, bank), bandGainSlider_);
+    bandFreqAttachment_ =
+        std::make_unique<SliderAttachment>(apvts, util::Params::IDs::freq(bandNum, bank), bandFreqSlider_);
+    bandGainAttachment_ =
+        std::make_unique<SliderAttachment>(apvts, util::Params::IDs::gain(bandNum, bank), bandGainSlider_);
     bandQAttachment_ = std::make_unique<SliderAttachment>(apvts, util::Params::IDs::q(bandNum, bank), bandQSlider_);
 
     setBandControlsEnabled(true);

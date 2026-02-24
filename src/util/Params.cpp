@@ -67,7 +67,6 @@ Params::Params(juce::AudioProcessor& processor) : apvts(processor, nullptr, "PAR
 
     cacheBandPointers(bandsA_, Bank::A);
     cacheBandPointers(bandsB_, Bank::B);
-
 }
 
 float Params::getOutputGainDb() const noexcept {
@@ -131,17 +130,17 @@ float Params::defaultFrequencyHzForBand(int bandNum) noexcept {
 juce::AudioProcessorValueTreeState::ParameterLayout Params::createLayout() {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID(IDs::editTarget, 1), "Edit Target", juce::StringArray{"Link", "A", "B"},
-        static_cast<int>(EditTarget::Link)));
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::editTarget, 1), "Edit Target",
+                                                                  juce::StringArray{"Link", "A", "B"},
+                                                                  static_cast<int>(EditTarget::Link)));
 
     params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::stereoMode, 1), "Stereo Mode",
                                                                   juce::StringArray{"Stereo", "Mid/Side", "Left/Right"},
                                                                   static_cast<int>(StereoMode::Stereo)));
 
-    params.push_back(
-        std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::hqMode, 1), "Quality",
-                                                     juce::StringArray{"Eco", "HQ (2x)"}, static_cast<int>(HQMode::Off)));
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::hqMode, 1), "Quality",
+                                                                  juce::StringArray{"Eco", "HQ (2x)"},
+                                                                  static_cast<int>(HQMode::Off)));
 
     // Output Gain
     params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::outputGain, 1), "Output Gain",
@@ -172,19 +171,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout Params::createLayout() {
         params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::freq(bandNum, bank), 1),
                                                                      prefix + "Freq", freqRange, defaultFreq));
 
-        params.push_back(
-            std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::gain(bandNum, bank), 1), prefix + "Gain",
-                                                        juce::NormalisableRange<float>(-24.0f, 24.0f, 0.01f),
-                                                        defaultGainDb()));
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID(IDs::gain(bandNum, bank), 1), prefix + "Gain",
+            juce::NormalisableRange<float>(-24.0f, 24.0f, 0.01f), defaultGainDb()));
 
         juce::NormalisableRange<float> qRange(0.1f, 18.0f, 0.01f);
         qRange.setSkewForCentre(1.0f);
         params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(IDs::q(bandNum, bank), 1),
                                                                      prefix + "Q", qRange, defaultQ()));
 
-        params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID(IDs::slope(bandNum, bank), 1),
-                                                                      prefix + "Slope", slopeChoices,
-                                                                      defaultSlopeIndex()));
+        params.push_back(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID(IDs::slope(bandNum, bank), 1), prefix + "Slope", slopeChoices, defaultSlopeIndex()));
     };
 
     for (int i = 0; i < NumBands; ++i) {
