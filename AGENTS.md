@@ -101,7 +101,7 @@ Deliverable: clean scaffold with CI placeholders and docs.
   - Preferred: git submodule at `third_party/JUCE`
   - Alternative: pinned release tarball with checksum notes in README
 - Create a JUCE plugin project via CMake:
-  - plugin name: `GravityEQ` (placeholder; can change later)
+  - plugin name: `EQInfinity` (placeholder; can change later)
   - formats: VST3, AU (mac), Standalone
 - Minimal audio processor that passes audio through (unity gain).
 - Minimal editor UI (just a label and an output gain slider).

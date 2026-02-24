@@ -1,6 +1,6 @@
 #include "PluginEditor.h"
 
-GravityEQAudioProcessorEditor::GravityEQAudioProcessorEditor(GravityEQAudioProcessor& p)
+EQInfinityAudioProcessorEditor::EQInfinityAudioProcessorEditor(EQInfinityAudioProcessor& p)
     : AudioProcessorEditor(&p), processor_(p)
 {
     setSize(420, 220);
@@ -20,16 +20,16 @@ GravityEQAudioProcessorEditor::GravityEQAudioProcessorEditor(GravityEQAudioProce
         processor_.params().apvts, util::Params::IDs::outputGain, outputGainSlider_);
 }
 
-void GravityEQAudioProcessorEditor::paint(juce::Graphics& g)
+void EQInfinityAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
 
     g.setColour(juce::Colours::white);
     g.setFont(20.0f);
-    g.drawFittedText("GravityEQ", getLocalBounds().removeFromTop(40), juce::Justification::centred, 1);
+    g.drawFittedText("EQInfinity", getLocalBounds().removeFromTop(40), juce::Justification::centred, 1);
 }
 
-void GravityEQAudioProcessorEditor::resized()
+void EQInfinityAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds().reduced(20);
     area.removeFromTop(50);

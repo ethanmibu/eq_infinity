@@ -1,4 +1,4 @@
-# GravityEQ
+# EQInfinity
 
 Cross-platform JUCE-based audio effect plugin scaffold (VST3/AU/Standalone) built with CMake (C++17).
 
@@ -26,7 +26,7 @@ git submodule update --init --recursive
 ./scripts/build.sh
 ```
 
-Binaries will be in `build/GravityEQ_artefacts/`.
+Binaries will be in `build/EQInfinity_artefacts/`.
 
 ## Build (Windows)
 
@@ -43,7 +43,7 @@ PowerShell:
 .\scripts\build.sh --config Release
 ```
 
-Binaries will be in `build\GravityEQ_artefacts\`.
+Binaries will be in `build\EQInfinity_artefacts\`.
 
 ## Plugin scan paths
 

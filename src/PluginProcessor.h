@@ -3,11 +3,11 @@
 #include <JuceHeader.h>
 #include "util/Params.h"
 
-class GravityEQAudioProcessor final : public juce::AudioProcessor
+class EQInfinityAudioProcessor final : public juce::AudioProcessor
 {
 public:
-    GravityEQAudioProcessor();
-    ~GravityEQAudioProcessor() override = default;
+    EQInfinityAudioProcessor();
+    ~EQInfinityAudioProcessor() override = default;
 
     //==============================================================================
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -51,5 +51,5 @@ private:
     juce::dsp::Gain<float> outputGain_;
     juce::dsp::ProcessSpec processSpec_{};
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GravityEQAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EQInfinityAudioProcessor)
 };

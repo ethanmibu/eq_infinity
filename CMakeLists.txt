@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(GravityEQ VERSION 0.1.0 LANGUAGES C CXX)
+project(EQInfinity VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,9 +17,9 @@ endif()
 
 add_subdirectory(third_party/JUCE)
 
-juce_add_plugin(GravityEQ
+juce_add_plugin(EQInfinity
     COMPANY_NAME "EQ Infinity"
-    BUNDLE_ID "com.eqinfinity.GravityEQ"
+    BUNDLE_ID "com.eqinfinity.EQInfinity"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
@@ -31,10 +31,10 @@ juce_add_plugin(GravityEQ
     PLUGIN_CODE GrEQ
 
     FORMATS AU VST3 Standalone
-    PRODUCT_NAME "GravityEQ"
+    PRODUCT_NAME "EQInfinity"
 )
 
-target_sources(GravityEQ PRIVATE
+target_sources(EQInfinity PRIVATE
     src/PluginProcessor.cpp
     src/PluginProcessor.h
     src/PluginEditor.cpp
@@ -43,17 +43,17 @@ target_sources(GravityEQ PRIVATE
     src/util/Params.h
 )
 
-target_include_directories(GravityEQ PRIVATE
+target_include_directories(EQInfinity PRIVATE
     src
 )
 
-target_compile_definitions(GravityEQ PRIVATE
+target_compile_definitions(EQInfinity PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
-target_link_libraries(GravityEQ PRIVATE
+target_link_libraries(EQInfinity PRIVATE
     juce::juce_audio_utils
     juce::juce_dsp
 
@@ -62,4 +62,4 @@ target_link_libraries(GravityEQ PRIVATE
     juce::juce_recommended_warning_flags
 )
 
-juce_generate_juce_header(GravityEQ)
+juce_generate_juce_header(EQInfinity)

@@ -1,7 +1,7 @@
  #include "PluginProcessor.h"
  #include "PluginEditor.h"
 
- GravityEQAudioProcessor::GravityEQAudioProcessor()
+ EQInfinityAudioProcessor::EQInfinityAudioProcessor()
      : AudioProcessor(BusesProperties()
  #if !JucePlugin_IsMidiEffect
  #if !JucePlugin_IsSynth
@@ -13,23 +13,23 @@
  {
  }
 
- const juce::String GravityEQAudioProcessor::getName() const
+ const juce::String EQInfinityAudioProcessor::getName() const
  {
      return JucePlugin_Name;
  }
 
- bool GravityEQAudioProcessor::acceptsMidi() const { return false; }
- bool GravityEQAudioProcessor::producesMidi() const { return false; }
- bool GravityEQAudioProcessor::isMidiEffect() const { return false; }
- double GravityEQAudioProcessor::getTailLengthSeconds() const { return 0.0; }
+ bool EQInfinityAudioProcessor::acceptsMidi() const { return false; }
+ bool EQInfinityAudioProcessor::producesMidi() const { return false; }
+ bool EQInfinityAudioProcessor::isMidiEffect() const { return false; }
+ double EQInfinityAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 
- int GravityEQAudioProcessor::getNumPrograms() { return 1; }
- int GravityEQAudioProcessor::getCurrentProgram() { return 0; }
- void GravityEQAudioProcessor::setCurrentProgram(int) {}
- const juce::String GravityEQAudioProcessor::getProgramName(int) { return {}; }
- void GravityEQAudioProcessor::changeProgramName(int, const juce::String&) {}
+ int EQInfinityAudioProcessor::getNumPrograms() { return 1; }
+ int EQInfinityAudioProcessor::getCurrentProgram() { return 0; }
+ void EQInfinityAudioProcessor::setCurrentProgram(int) {}
+ const juce::String EQInfinityAudioProcessor::getProgramName(int) { return {}; }
+ void EQInfinityAudioProcessor::changeProgramName(int, const juce::String&) {}
 
- void GravityEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+ void EQInfinityAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
  {
      processSpec_.sampleRate = sampleRate;
      processSpec_.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
@@ -45,12 +45,12 @@
      outputGain_.setGainDecibels(gainDb);
  }
 
- void GravityEQAudioProcessor::releaseResources()
+ void EQInfinityAudioProcessor::releaseResources()
  {
  }
 
 #if !JucePlugin_PreferredChannelConfigurations
- bool GravityEQAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+ bool EQInfinityAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
  {
      const auto& mainIn = layouts.getMainInputChannelSet();
      const auto& mainOut = layouts.getMainOutputChannelSet();
@@ -67,7 +67,7 @@
  }
 #endif
 
- void GravityEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+ void EQInfinityAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
  {
      juce::ignoreUnused(midiMessages);
 
@@ -87,14 +87,14 @@
      outputGain_.process(ctx);
  }
 
- bool GravityEQAudioProcessor::hasEditor() const { return true; }
+ bool EQInfinityAudioProcessor::hasEditor() const { return true; }
 
- juce::AudioProcessorEditor* GravityEQAudioProcessor::createEditor()
+ juce::AudioProcessorEditor* EQInfinityAudioProcessor::createEditor()
  {
-     return new GravityEQAudioProcessorEditor(*this);
+     return new EQInfinityAudioProcessorEditor(*this);
  }
 
- void GravityEQAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+ void EQInfinityAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
  {
      // APVTS -> XML -> binary
      auto state = params_.apvts.copyState();
@@ -102,7 +102,7 @@
      copyXmlToBinary(*xml, destData);
  }
 
- void GravityEQAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+ void EQInfinityAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
  {
      std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
      if (xmlState == nullptr)
@@ -117,5 +117,5 @@
  // This creates new instances of the plugin.
  juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
  {
-     return new GravityEQAudioProcessor();
+     return new EQInfinityAudioProcessor();
  }

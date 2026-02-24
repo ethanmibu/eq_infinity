@@ -3,17 +3,17 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-class GravityEQAudioProcessorEditor final : public juce::AudioProcessorEditor
+class EQInfinityAudioProcessorEditor final : public juce::AudioProcessorEditor
 {
 public:
-    explicit GravityEQAudioProcessorEditor(GravityEQAudioProcessor&);
-    ~GravityEQAudioProcessorEditor() override = default;
+    explicit EQInfinityAudioProcessorEditor(EQInfinityAudioProcessor&);
+    ~EQInfinityAudioProcessorEditor() override = default;
 
     void paint(juce::Graphics&) override;
     void resized() override;
 
 private:
-    GravityEQAudioProcessor& processor_;
+    EQInfinityAudioProcessor& processor_;
 
     juce::Slider outputGainSlider_;
     juce::Label outputGainLabel_;
@@ -21,5 +21,5 @@ private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<SliderAttachment> outputGainAttachment_;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GravityEQAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EQInfinityAudioProcessorEditor)
 };
