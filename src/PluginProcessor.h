@@ -1,11 +1,11 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "dsp/EqEngine.h"
 #include "util/Params.h"
+#include <JuceHeader.h>
 
-class EQInfinityAudioProcessor final : public juce::AudioProcessor
-{
-public:
+class EQInfinityAudioProcessor final : public juce::AudioProcessor {
+  public:
     EQInfinityAudioProcessor();
     ~EQInfinityAudioProcessor() override = default;
 
@@ -13,9 +13,9 @@ public:
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
-   #if !JucePlugin_PreferredChannelConfigurations
+#if !JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
-   #endif
+#endif
 
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
@@ -45,9 +45,9 @@ public:
     util::Params& params() noexcept { return params_; }
     const util::Params& params() const noexcept { return params_; }
 
-private:
     util::Params params_;
 
+    ::dsp::EqEngine eqEngine_;
     juce::dsp::Gain<float> outputGain_;
     juce::dsp::ProcessSpec processSpec_{};
 

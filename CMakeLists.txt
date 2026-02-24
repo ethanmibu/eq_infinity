@@ -41,6 +41,10 @@ target_sources(EQInfinity PRIVATE
     src/PluginEditor.h
     src/util/Params.cpp
     src/util/Params.h
+    src/dsp/EqBand.cpp
+    src/dsp/EqBand.h
+    src/dsp/EqEngine.cpp
+    src/dsp/EqEngine.h
 )
 
 target_include_directories(EQInfinity PRIVATE
