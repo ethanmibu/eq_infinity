@@ -4,7 +4,7 @@ Targets: VST3 (Win/macOS) + AU (macOS), plus Standalone for dev
 Non-goals: Copying Ableton branding/trade dress; AAX is optional and out of initial scope.
 
 ## How agents should work
-**Antigravity workflow** (required):
+**Workflow** (required):
 1) Make a short plan with milestones and deliverables.
 2) Scaffold repo structure and build tooling.
 3) Implement features in small, testable increments.
@@ -21,6 +21,7 @@ Non-goals: Copying Ableton branding/trade dress; AAX is optional and out of init
 ## Quick outcome definition
 This repo should result in:
 - A JUCE-based plugin that compiles on macOS and Windows
+- macOS is primary, Windows is secondary
 - Builds produce: Standalone app + VST3 (and AU on macOS)
 - 8 bands with per-band: Type, Freq, Gain (if applicable), Q (if applicable), Slope (cuts), Enabled
 - Global output gain

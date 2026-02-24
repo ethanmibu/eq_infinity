@@ -19,6 +19,7 @@ add_subdirectory(third_party/JUCE)
 
 juce_add_plugin(GravityEQ
     COMPANY_NAME "EQ Infinity"
+    BUNDLE_ID "com.eqinfinity.GravityEQ"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
@@ -49,6 +50,7 @@ target_include_directories(GravityEQ PRIVATE
 target_compile_definitions(GravityEQ PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
 target_link_libraries(GravityEQ PRIVATE

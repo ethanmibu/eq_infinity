@@ -9,7 +9,7 @@
  #endif
          .withOutput("Output", juce::AudioChannelSet::stereo(), true)
  #endif
-     )
+     ), params_(*this)
  {
  }
 
