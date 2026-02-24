@@ -48,7 +48,7 @@ void EQInfinityAudioProcessorEditor::paint(juce::Graphics& g) {
 
 void EQInfinityAudioProcessorEditor::resized() {
     auto bounds = getLocalBounds().reduced(14);
-    auto bottomStrip = bounds.removeFromBottom(110);
+    auto bottomStrip = bounds.removeFromBottom(132);
     auto leftColumn = bounds.removeFromLeft(118);
     auto plotBounds = bounds.reduced(6, 0);
 
@@ -58,29 +58,67 @@ void EQInfinityAudioProcessorEditor::resized() {
 
     eqPlot_.setBounds(plotBounds);
 
-    auto selectedControls = bottomStrip.removeFromTop(58);
-    auto globalControls = selectedControls.removeFromRight(324);
+    auto selectedControls = bottomStrip.removeFromTop(78);
+    const bool showEditTarget = processor_.params().getStereoMode() != util::StereoMode::Stereo;
+    const int globalMinWidth = showEditTarget ? 248 : 224;
+    const int globalPrefWidth = showEditTarget ? 324 : 286;
+    const int globalWidth =
+        juce::jlimit(globalMinWidth, globalPrefWidth, juce::jmax(globalMinWidth, selectedControls.getWidth() / 3));
+    auto globalControls = selectedControls.removeFromRight(globalWidth).reduced(0, 2);
+    auto bandControls = selectedControls.reduced(0, 2);
 
-    const int rowHeight = globalControls.getHeight() / 3;
+    const int globalRows = showEditTarget ? 3 : 2;
+    const int rowHeight = juce::jmax(22, globalControls.getHeight() / globalRows);
     auto stereoArea = globalControls.removeFromTop(rowHeight);
     stereoModeLabel_.setBounds(stereoArea.removeFromLeft(56).reduced(2));
     stereoModeBox_.setBounds(stereoArea.reduced(2));
 
-    auto targetArea = globalControls.removeFromTop(rowHeight);
-    editTargetLabel_.setBounds(targetArea.removeFromLeft(56).reduced(2));
-    editTargetBox_.setBounds(targetArea.reduced(2));
+    if (showEditTarget) {
+        auto targetArea = globalControls.removeFromTop(rowHeight);
+        editTargetLabel_.setBounds(targetArea.removeFromLeft(56).reduced(2));
+        editTargetBox_.setBounds(targetArea.reduced(2));
+    } else {
+        editTargetLabel_.setBounds({});
+        editTargetBox_.setBounds({});
+    }
 
     auto qualityArea = globalControls;
     qualityLabel_.setBounds(qualityArea.removeFromLeft(56).reduced(2));
     qualityModeBox_.setBounds(qualityArea.reduced(2));
 
-    selectedBandLabel_.setBounds(selectedControls.removeFromLeft(74).reduced(4));
-    bandEnableToggle_.setBounds(selectedControls.removeFromLeft(80).reduced(4));
-    bandTypeBox_.setBounds(selectedControls.removeFromLeft(154).reduced(4));
-    bandSlopeBox_.setBounds(selectedControls.removeFromLeft(122).reduced(4));
-    bandFreqSlider_.setBounds(selectedControls.removeFromLeft(152).reduced(4));
-    bandGainSlider_.setBounds(selectedControls.removeFromLeft(122).reduced(4));
-    bandQSlider_.setBounds(selectedControls.removeFromLeft(112).reduced(4));
+    const int controlGap = 6;
+    selectedBandLabel_.setBounds(bandControls.removeFromLeft(92).reduced(4));
+    bandControls.removeFromLeft(controlGap);
+    bandEnableToggle_.setBounds(bandControls.removeFromLeft(108).reduced(4));
+    bandControls.removeFromLeft(controlGap);
+    bandTypeBox_.setBounds(bandControls.removeFromLeft(152).reduced(4));
+    bandControls.removeFromLeft(controlGap);
+    bandSlopeBox_.setBounds(bandControls.removeFromLeft(126).reduced(4));
+    bandControls.removeFromLeft(controlGap);
+
+    const int singleRowMinWidth = 170 + controlGap + 132 + controlGap + 108;
+    if (bandControls.getWidth() >= singleRowMinWidth) {
+        const int available = bandControls.getWidth() - controlGap * 2;
+        const int freqWidth = juce::jmax(170, static_cast<int>(available * 0.52f));
+        const int qWidth = juce::jmax(108, static_cast<int>(available * 0.22f));
+        const int gainWidth = juce::jmax(132, available - freqWidth - qWidth);
+
+        bandFreqSlider_.setBounds(bandControls.removeFromLeft(freqWidth).reduced(4));
+        bandControls.removeFromLeft(controlGap);
+        bandGainSlider_.setBounds(bandControls.removeFromLeft(gainWidth).reduced(4));
+        bandControls.removeFromLeft(controlGap);
+        bandQSlider_.setBounds(bandControls.removeFromLeft(qWidth).reduced(4));
+    } else {
+        auto upperRow = bandControls.removeFromTop(bandControls.getHeight() / 2);
+        auto lowerRow = bandControls;
+        bandFreqSlider_.setBounds(upperRow.reduced(4));
+
+        const int lowerAvailable = lowerRow.getWidth() - controlGap;
+        const int gainWidth = juce::jmax(132, lowerAvailable / 2);
+        bandGainSlider_.setBounds(lowerRow.removeFromLeft(gainWidth).reduced(4));
+        lowerRow.removeFromLeft(controlGap);
+        bandQSlider_.setBounds(lowerRow.reduced(4));
+    }
 
     auto bandRow = bottomStrip.reduced(0, 8);
     const int buttonWidth = bandRow.getWidth() / util::Params::NumBands;
