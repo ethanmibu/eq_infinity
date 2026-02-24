@@ -1,24 +1,36 @@
 # EQInfinity
 
-Cross-platform JUCE-based audio effect plugin scaffold (VST3/AU/Standalone) built with CMake (C++17).
+8-band JUCE EQ plugin project (EQ Eight–style workflow, original UI/branding) targeting:
+- macOS: AU, VST3, Standalone
+- Windows: VST3, Standalone
 
-## Getting JUCE (as submodule)
+Current implementation includes Milestone 2 (APVTS parameter system) and Milestone 3 DSP foundations.
 
-This repo expects JUCE at `third_party/JUCE`.
+## Prerequisites
+
+- CMake 3.21+
+- C++17 toolchain
+- JUCE in `third_party/JUCE` (submodule expected)
+
+### macOS
+- Xcode + command line tools
+- Ninja (recommended)
+- clang-format (for formatting checks)
+
+### Windows
+- Visual Studio 2022 (Desktop development with C++)
+
+## Clone + JUCE Setup
 
 ```bash
-git submodule add https://github.com/juce-framework/JUCE.git third_party/JUCE
+git clone <repo-url>
+cd eq_infinity
 git submodule update --init --recursive
 ```
 
-> **Note:** JUCE is licensed separately. See JUCE licensing terms on the JUCE repository. This scaffold does not include JUCE.
+## Build
 
-## Build (macOS)
-
-**Prereqs**
-- Xcode + command line tools
-- CMake 3.21+
-- Ninja (recommended)
+### macOS
 
 ```bash
 ./scripts/setup_macos.sh
@@ -26,26 +38,44 @@ git submodule update --init --recursive
 ./scripts/build.sh
 ```
 
-Binaries will be in `build/EQInfinity_artefacts/`.
-
-## Build (Windows)
-
-**Prereqs**
-- Visual Studio 2022 (Desktop development with C++)
-- CMake 3.21+
-- (Optional) Ninja
-
-PowerShell:
+### Windows (PowerShell)
 
 ```powershell
 .\scripts\setup_windows.ps1
-.\scripts\configure.sh -G "Visual Studio 17 2022" -A x64
-.\scripts\build.sh --config Release
+bash ./scripts/configure.sh -G "Visual Studio 17 2022" -A x64
+bash ./scripts/build.sh --config Release
 ```
 
-Binaries will be in `build\EQInfinity_artefacts\`.
+Artifacts are generated under `build/EQInfinity_artefacts/`.
 
-## Plugin scan paths
+## Test
+
+```bash
+./scripts/configure.sh -DBUILD_TESTING=ON
+./scripts/build.sh --target eq_infinity_tests
+ctest --test-dir build --output-on-failure
+```
+
+## Formatting
+
+```bash
+# apply formatting
+./scripts/format.sh apply
+
+# check formatting (non-mutating, CI-safe)
+./scripts/format.sh check
+```
+
+## Key CMake Options
+
+- `-DEQINF_COPY_PLUGIN_AFTER_BUILD=ON|OFF`
+  - Controls whether built plugins are copied into system plugin directories.
+- `-DEQINF_PLUGIN_FORMATS="VST3;Standalone"` (Windows default)
+- `-DEQINF_PLUGIN_FORMATS="AU;VST3;Standalone"` (macOS default)
+- `-DZL_JUCE_COPY_PLUGIN=TRUE|FALSE` (template-compatible alias)
+- `-DZL_JUCE_FORMATS="..."` (template-compatible alias)
+
+## Plugin Scan Paths
 
 ### macOS
 - AU: `/Library/Audio/Plug-Ins/Components` and `~/Library/Audio/Plug-Ins/Components`
@@ -54,14 +84,16 @@ Binaries will be in `build\EQInfinity_artefacts\`.
 ### Windows
 - VST3: `C:\Program Files\Common Files\VST3`
 
-## Development notes
+## Troubleshooting
 
-- Initial plugin is a pass-through with an **Output Gain** parameter (AudioProcessorValueTreeState).
-- State is saved/restored via APVTS XML.
-- Supports mono and stereo buses.
-- **Audio thread rules:** no allocations and no locks inside `processBlock`.
+- Plugin not showing in host:
+  - verify format was built via `EQINF_PLUGIN_FORMATS`
+  - disable auto-copy (`EQINF_COPY_PLUGIN_AFTER_BUILD=OFF`) and install manually if needed
+  - re-scan plugins in the host
+- Build cannot find JUCE:
+  - run `git submodule update --init --recursive`
 
-## Licensing
+## License
 
-- `LICENSE` in this repo is a placeholder for your project’s license.
-- JUCE is a third-party dependency and is licensed separately; ensure compliance with JUCE licensing for your distribution.
+- `LICENSE` in this repo is a project placeholder license.
+- JUCE is a separate dependency with its own licensing terms.

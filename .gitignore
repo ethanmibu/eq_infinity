@@ -32,15 +32,21 @@ xcuserdata/
 # CMake & Build
 build/
 out/
+cmake-build-*/
 bin/
 CMakeCache.txt
 CMakeFiles/
 CMakeScripts/
 Testing/
+CTestTestfile.cmake
 Makefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
+.cache/
+.clangd/
+_deps/
+.env
 
 # Visual Studio
 .vs/
@@ -51,6 +57,9 @@ compile_commands.json
 *.ncb
 *.pdb
 *.idb
+cmake-build-debug/
+cmake-build-release/
+cmake-build-relwithdebinfo/
 
 # JUCE intermediates
 JuceLibraryCode/

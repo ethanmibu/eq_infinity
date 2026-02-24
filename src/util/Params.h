@@ -1,8 +1,8 @@
 #pragma once
 
-#include <JuceHeader.h>
 #include <array>
 #include <atomic>
+#include <juce_audio_processors/juce_audio_processors.h>
 
 namespace util {
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../util/Params.h"
-#include <JuceHeader.h>
+#include <juce_dsp/juce_dsp.h>
 
 namespace dsp {
 class EqBand {
@@ -15,7 +15,7 @@ class EqBand {
     // Call this before processing a block to apply updated parameters.
     void updateCoefficients(const util::Params::BandParams& params, double sampleRate);
 
-    // Bypasses internal processing if `enabled` is false or if unity gain.
+    // Bypasses internal processing when the band is disabled.
     template <typename ProcessContext> void process(const ProcessContext& context) {
         if (!enabled_)
             return;
@@ -25,15 +25,12 @@ class EqBand {
     }
 
   private:
-    using Filter = juce::dsp::IIR::Filter<float>;
-    using FilterCoefficients = juce::dsp::IIR::Coefficients<float>;
-
-    void updateFilterState(juce::dsp::IIR::Coefficients<float>::Ptr newCoefficients);
+    using Filter = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
+    using ArrayCoefficients = juce::dsp::IIR::ArrayCoefficients<float>;
 
     std::array<Filter, 4> filters_;
 
     bool enabled_ = false;
-    util::FilterType lastType_;
 
     // Smoothing interpolators
     juce::LinearSmoothedValue<float> smoothedFreq_{1000.0f};

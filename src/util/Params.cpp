@@ -8,19 +8,20 @@ Params::Params(juce::AudioProcessor& processor) : apvts(processor, nullptr, "PAR
 
     for (int i = 0; i < NumBands; ++i) {
         const int bandNum = i + 1;
-        bands_[i].enabled = apvts.getRawParameterValue(IDs::enabled(bandNum));
-        bands_[i].type = apvts.getRawParameterValue(IDs::type(bandNum));
-        bands_[i].freq = apvts.getRawParameterValue(IDs::freq(bandNum));
-        bands_[i].gain = apvts.getRawParameterValue(IDs::gain(bandNum));
-        bands_[i].q = apvts.getRawParameterValue(IDs::q(bandNum));
-        bands_[i].slope = apvts.getRawParameterValue(IDs::slope(bandNum));
+        const auto index = static_cast<std::size_t>(i);
+        bands_[index].enabled = apvts.getRawParameterValue(IDs::enabled(bandNum));
+        bands_[index].type = apvts.getRawParameterValue(IDs::type(bandNum));
+        bands_[index].freq = apvts.getRawParameterValue(IDs::freq(bandNum));
+        bands_[index].gain = apvts.getRawParameterValue(IDs::gain(bandNum));
+        bands_[index].q = apvts.getRawParameterValue(IDs::q(bandNum));
+        bands_[index].slope = apvts.getRawParameterValue(IDs::slope(bandNum));
 
-        jassert(bands_[i].enabled != nullptr);
-        jassert(bands_[i].type != nullptr);
-        jassert(bands_[i].freq != nullptr);
-        jassert(bands_[i].gain != nullptr);
-        jassert(bands_[i].q != nullptr);
-        jassert(bands_[i].slope != nullptr);
+        jassert(bands_[index].enabled != nullptr);
+        jassert(bands_[index].type != nullptr);
+        jassert(bands_[index].freq != nullptr);
+        jassert(bands_[index].gain != nullptr);
+        jassert(bands_[index].q != nullptr);
+        jassert(bands_[index].slope != nullptr);
     }
 }
 

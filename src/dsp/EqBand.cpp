@@ -35,76 +35,68 @@ void EqBand::updateCoefficients(const util::Params::BandParams& params, double s
     const float q = params.q->load(std::memory_order_relaxed);
     const auto slope = static_cast<util::Slope>(static_cast<int>(params.slope->load(std::memory_order_relaxed)));
 
-    smoothedFreq_.setTargetValue(freq);
+    const float maxFrequency = static_cast<float>(juce::jmin(sampleRate_ * 0.495, 20000.0));
+    const float clampedFreq = juce::jlimit(20.0f, maxFrequency, freq);
+    const float clampedQ = juce::jlimit(0.1f, 18.0f, q);
+
+    smoothedFreq_.setTargetValue(clampedFreq);
     smoothedGain_.setTargetValue(gain);
-    smoothedQ_.setTargetValue(q);
+    smoothedQ_.setTargetValue(clampedQ);
 
     // Get current interpolated values
     const float currentFreq = smoothedFreq_.getNextValue();
     const float currentGain = juce::Decibels::decibelsToGain(smoothedGain_.getNextValue());
     const float currentQ = smoothedQ_.getNextValue();
 
-    FilterCoefficients::Ptr coeffs;
+    std::array<float, 6> coeffs{1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
 
     switch (type) {
     case util::FilterType::Peak:
-        coeffs = FilterCoefficients::makePeakFilter(sampleRate_, currentFreq, currentQ, currentGain);
+        coeffs = ArrayCoefficients::makePeakFilter(sampleRate_, currentFreq, currentQ, currentGain);
         break;
     case util::FilterType::LowShelf:
-        coeffs = FilterCoefficients::makeLowShelf(sampleRate_, currentFreq, currentQ, currentGain);
+        coeffs = ArrayCoefficients::makeLowShelf(sampleRate_, currentFreq, currentQ, currentGain);
         break;
     case util::FilterType::HighShelf:
-        coeffs = FilterCoefficients::makeHighShelf(sampleRate_, currentFreq, currentQ, currentGain);
+        coeffs = ArrayCoefficients::makeHighShelf(sampleRate_, currentFreq, currentQ, currentGain);
         break;
     case util::FilterType::HighPass:
-        coeffs = FilterCoefficients::makeHighPass(sampleRate_, currentFreq, currentQ);
+        coeffs = ArrayCoefficients::makeHighPass(sampleRate_, currentFreq, currentQ);
         break;
     case util::FilterType::LowPass:
-        coeffs = FilterCoefficients::makeLowPass(sampleRate_, currentFreq, currentQ);
+        coeffs = ArrayCoefficients::makeLowPass(sampleRate_, currentFreq, currentQ);
         break;
     }
 
-    if (coeffs != nullptr) {
-        // For LowPass/HighPass, slope determines how many biquads we cascade
-        // 12dB/oct = 1 biquad, 24dB/oct = 2 biquads, etc.
-        int numFiltersToUse = 1;
+    // For LowPass/HighPass, slope determines how many biquads we cascade
+    // 12dB/oct = 1 biquad, 24dB/oct = 2 biquads, etc.
+    int numFiltersToUse = 1;
 
-        if (type == util::FilterType::LowPass || type == util::FilterType::HighPass) {
-            switch (slope) {
-            case util::Slope::Slope12dB:
-                numFiltersToUse = 1;
-                break;
-            case util::Slope::Slope24dB:
-                numFiltersToUse = 2;
-                break;
-            case util::Slope::Slope36dB:
-                numFiltersToUse = 3;
-                break;
-            case util::Slope::Slope48dB:
-                numFiltersToUse = 4;
-                break;
-            }
+    if (type == util::FilterType::LowPass || type == util::FilterType::HighPass) {
+        switch (slope) {
+        case util::Slope::Slope12dB:
+            numFiltersToUse = 1;
+            break;
+        case util::Slope::Slope24dB:
+            numFiltersToUse = 2;
+            break;
+        case util::Slope::Slope36dB:
+            numFiltersToUse = 3;
+            break;
+        case util::Slope::Slope48dB:
+            numFiltersToUse = 4;
+            break;
         }
+    }
 
-        // Apply coefficient to required number of filters
-        for (int i = 0; i < numFiltersToUse; ++i) {
-            *(filters_[static_cast<std::size_t>(i)].coefficients) = *coeffs;
-        }
+    const std::array<float, 6> bypassCoeffs{1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
 
-        // Bypass remaining unused filters by setting unity gain coefficients
-        FilterCoefficients::Ptr bypassCoeffs =
-            FilterCoefficients::makeFirstOrderLowPass(sampleRate_, sampleRate_ / 2.0f);
-        bypassCoeffs->coefficients.clear();
-        bypassCoeffs->coefficients.set(0, 1.0f); // b0
-        bypassCoeffs->coefficients.set(1, 0.0f); // b1
-        bypassCoeffs->coefficients.set(2, 0.0f); // b2
-        bypassCoeffs->coefficients.set(3, 1.0f); // a0
-        bypassCoeffs->coefficients.set(4, 0.0f); // a1
-        bypassCoeffs->coefficients.set(5, 0.0f); // a2
+    for (int i = 0; i < numFiltersToUse; ++i) {
+        *(filters_[static_cast<std::size_t>(i)].state) = coeffs;
+    }
 
-        for (int i = numFiltersToUse; i < 4; ++i) {
-            *(filters_[static_cast<std::size_t>(i)].coefficients) = *bypassCoeffs;
-        }
+    for (int i = numFiltersToUse; i < 4; ++i) {
+        *(filters_[static_cast<std::size_t>(i)].state) = bypassCoeffs;
     }
 }
 } // namespace dsp

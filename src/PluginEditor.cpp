@@ -1,8 +1,7 @@
 #include "PluginEditor.h"
 
 EQInfinityAudioProcessorEditor::EQInfinityAudioProcessorEditor(EQInfinityAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor_(p)
-{
+    : AudioProcessorEditor(&p), processor_(p) {
     setSize(420, 220);
 
     outputGainSlider_.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -16,12 +15,11 @@ EQInfinityAudioProcessorEditor::EQInfinityAudioProcessorEditor(EQInfinityAudioPr
     addAndMakeVisible(outputGainSlider_);
     addAndMakeVisible(outputGainLabel_);
 
-    outputGainAttachment_ = std::make_unique<SliderAttachment>(
-        processor_.params().apvts, util::Params::IDs::outputGain, outputGainSlider_);
+    outputGainAttachment_ =
+        std::make_unique<SliderAttachment>(processor_.params().apvts, util::Params::IDs::outputGain, outputGainSlider_);
 }
 
-void EQInfinityAudioProcessorEditor::paint(juce::Graphics& g)
-{
+void EQInfinityAudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(juce::Colours::black);
 
     g.setColour(juce::Colours::white);
@@ -29,8 +27,7 @@ void EQInfinityAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawFittedText("EQInfinity", getLocalBounds().removeFromTop(40), juce::Justification::centred, 1);
 }
 
-void EQInfinityAudioProcessorEditor::resized()
-{
+void EQInfinityAudioProcessorEditor::resized() {
     auto area = getLocalBounds().reduced(20);
     area.removeFromTop(50);
 

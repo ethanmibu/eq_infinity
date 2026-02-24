@@ -1,18 +1,17 @@
 #pragma once
 
-#include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include <JuceHeader.h>
 
-class EQInfinityAudioProcessorEditor final : public juce::AudioProcessorEditor
-{
-public:
+class EQInfinityAudioProcessorEditor final : public juce::AudioProcessorEditor {
+  public:
     explicit EQInfinityAudioProcessorEditor(EQInfinityAudioProcessor&);
     ~EQInfinityAudioProcessorEditor() override = default;
 
     void paint(juce::Graphics&) override;
     void resized() override;
 
-private:
+  private:
     EQInfinityAudioProcessor& processor_;
 
     juce::Slider outputGainSlider_;

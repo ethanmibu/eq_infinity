@@ -2,7 +2,7 @@
 
 #include "../util/Params.h"
 #include "EqBand.h"
-#include <JuceHeader.h>
+#include <juce_dsp/juce_dsp.h>
 
 namespace dsp {
 class EqEngine {

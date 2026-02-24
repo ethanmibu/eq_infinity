@@ -1,27 +1,50 @@
-name: macOS Build
+name: macOS CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  BUILD_DIR: build
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-    - name: Set up CMake
-      uses: jwlawson/actions-setup-cmake@v1.13
-      with:
-        cmake-version: '3.21.x'
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v1
+        with:
+          cmake-version: "3.28.x"
 
-    - name: Configure CMake
-      run: ./scripts/configure.sh -G Ninja
+      - name: Install tools
+        run: brew install ninja clang-format
 
-    - name: Build
-      run: ./scripts/build.sh
+      - name: Check formatting
+        run: ./scripts/format.sh check
+
+      - name: Configure CMake
+        run: ./scripts/configure.sh -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DZL_JUCE_COPY_PLUGIN=FALSE -DBUILD_TESTING=ON
+
+      - name: Build
+        run: ./scripts/build.sh --config ${{ env.BUILD_TYPE }}
+
+      - name: Run tests
+        run: ctest --test-dir ${{ env.BUILD_DIR }} --output-on-failure

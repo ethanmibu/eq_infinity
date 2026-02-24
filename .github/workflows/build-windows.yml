@@ -1,29 +1,46 @@
-name: Windows Build
+name: Windows CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  BUILD_DIR: build
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-    - name: Set up CMake
-      uses: jwlawson/actions-setup-cmake@v1.13
-      with:
-        cmake-version: '3.21.x'
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v1
+        with:
+          cmake-version: "3.28.x"
 
-    - name: Configure CMake
-      run: .\scripts\configure.sh -G "Visual Studio 17 2022" -A x64
-      shell: pwsh
+      - name: Configure CMake
+        run: ./scripts/configure.sh -G "Visual Studio 17 2022" -A x64 -DZL_JUCE_COPY_PLUGIN=FALSE -DBUILD_TESTING=ON
+        shell: bash
 
-    - name: Build
-      run: .\scripts\build.sh --config Release
-      shell: pwsh
+      - name: Build
+        run: ./scripts/build.sh --config ${{ env.BUILD_TYPE }}
+        shell: bash
+
+      - name: Run tests
+        run: ctest --test-dir ${{ env.BUILD_DIR }} -C ${{ env.BUILD_TYPE }} --output-on-failure
+        shell: bash
