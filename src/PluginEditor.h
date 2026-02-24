@@ -54,13 +54,15 @@ class EQInfinityAudioProcessorEditor final : public juce::AudioProcessorEditor, 
     std::unique_ptr<SliderAttachment> bandGainAttachment_;
     std::unique_ptr<SliderAttachment> bandQAttachment_;
 
-    int selectedBandIndex_ = 0;
+    int selectedBandIndex_ = -1;
     util::EditTarget lastEditTarget_ = util::EditTarget::Link;
     util::StereoMode lastStereoMode_ = util::StereoMode::Stereo;
 
     void timerCallback() override;
     void configureControls();
     void selectBand(int bandIndex);
+    void setBandControlsEnabled(bool enabled);
+    void enforceStereoEditTargetPolicy();
     void rebuildSelectedBandAttachments();
     void updateSelectedBandControlState();
     void updateBandButtonStyles();

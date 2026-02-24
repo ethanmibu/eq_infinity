@@ -43,8 +43,9 @@ class EqPlotComponent final : public juce::Component, private juce::Timer {
     std::array<juce::Point<float>, util::Params::NumBands> nodePositions_{};
 
     double sampleRate_ = 44100.0;
-    int selectedBandIndex_ = 0;
+    int selectedBandIndex_ = -1;
     int draggingBandIndex_ = -1;
+    int pendingDragBandIndex_ = -1;
     bool soloActive_ = false;
     juce::Point<float> dragStartPosition_{};
     float dragStartFrequencyHz_ = 1000.0f;

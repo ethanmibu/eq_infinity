@@ -28,7 +28,7 @@ EQInfinityAudioProcessorEditor::EQInfinityAudioProcessorEditor(EQInfinityAudioPr
         std::make_unique<ComboBoxAttachment>(processor_.params().apvts, util::Params::IDs::hqMode, qualityModeBox_);
 
     updateGlobalControlLabels();
-    selectBand(0);
+    selectBand(-1);
     startTimerHz(20);
 }
 
@@ -92,6 +92,7 @@ void EQInfinityAudioProcessorEditor::resized() {
 
 void EQInfinityAudioProcessorEditor::timerCallback() {
     eqPlot_.setSampleRate(processor_.getSampleRate());
+    enforceStereoEditTargetPolicy();
 
     const auto editTarget = processor_.params().getEditTarget();
     const auto stereoMode = processor_.params().getStereoMode();
@@ -103,7 +104,7 @@ void EQInfinityAudioProcessorEditor::timerCallback() {
         rebuildSelectedBandAttachments();
     }
 
-    if (editTarget == util::EditTarget::Link) {
+    if (editTarget == util::EditTarget::Link && selectedBandIndex_ >= 0) {
         const int bandNum = selectedBandIndex_ + 1;
         auto& apvts = processor_.params().apvts;
         auto mirrorField = [&](const juce::String& sourceID, const juce::String& destinationID) {
@@ -222,13 +223,55 @@ void EQInfinityAudioProcessorEditor::configureControls() {
 }
 
 void EQInfinityAudioProcessorEditor::selectBand(int bandIndex) {
-    selectedBandIndex_ = juce::jlimit(0, util::Params::NumBands - 1, bandIndex);
+    if (bandIndex < 0 || bandIndex >= util::Params::NumBands)
+        selectedBandIndex_ = -1;
+    else
+        selectedBandIndex_ = bandIndex;
+
     eqPlot_.setSelectedBand(selectedBandIndex_);
     rebuildSelectedBandAttachments();
     updateBandButtonStyles();
 }
 
+void EQInfinityAudioProcessorEditor::setBandControlsEnabled(bool enabled) {
+    bandEnableToggle_.setEnabled(enabled);
+    bandTypeBox_.setEnabled(enabled);
+    bandSlopeBox_.setEnabled(enabled);
+    bandFreqSlider_.setEnabled(enabled);
+    bandGainSlider_.setEnabled(enabled);
+    bandQSlider_.setEnabled(enabled);
+}
+
+void EQInfinityAudioProcessorEditor::enforceStereoEditTargetPolicy() {
+    if (processor_.params().getStereoMode() != util::StereoMode::Stereo)
+        return;
+
+    auto* editTargetParam =
+        dynamic_cast<juce::RangedAudioParameter*>(processor_.params().apvts.getParameter(util::Params::IDs::editTarget));
+    if (editTargetParam == nullptr)
+        return;
+
+    const float currentValue = editTargetParam->convertFrom0to1(editTargetParam->getValue());
+    if (std::abs(currentValue - static_cast<float>(util::EditTarget::Link)) < 1.0e-6f)
+        return;
+
+    editTargetParam->setValueNotifyingHost(editTargetParam->convertTo0to1(static_cast<float>(util::EditTarget::Link)));
+}
+
 void EQInfinityAudioProcessorEditor::rebuildSelectedBandAttachments() {
+    bandEnableAttachment_.reset();
+    bandTypeAttachment_.reset();
+    bandSlopeAttachment_.reset();
+    bandFreqAttachment_.reset();
+    bandGainAttachment_.reset();
+    bandQAttachment_.reset();
+
+    if (selectedBandIndex_ < 0 || selectedBandIndex_ >= util::Params::NumBands) {
+        selectedBandLabel_.setText("No Band", juce::dontSendNotification);
+        setBandControlsEnabled(false);
+        return;
+    }
+
     const int bandNum = selectedBandIndex_ + 1;
     selectedBandLabel_.setText("Band " + juce::String(bandNum), juce::dontSendNotification);
     bandFreqSlider_.setDoubleClickReturnValue(true, util::Params::defaultFrequencyHzForBand(bandNum));
@@ -246,10 +289,16 @@ void EQInfinityAudioProcessorEditor::rebuildSelectedBandAttachments() {
     bandGainAttachment_ = std::make_unique<SliderAttachment>(apvts, util::Params::IDs::gain(bandNum, bank), bandGainSlider_);
     bandQAttachment_ = std::make_unique<SliderAttachment>(apvts, util::Params::IDs::q(bandNum, bank), bandQSlider_);
 
+    setBandControlsEnabled(true);
     updateSelectedBandControlState();
 }
 
 void EQInfinityAudioProcessorEditor::updateSelectedBandControlState() {
+    if (selectedBandIndex_ < 0 || selectedBandIndex_ >= util::Params::NumBands) {
+        setBandControlsEnabled(false);
+        return;
+    }
+
     const auto typeIndex = bandTypeBox_.getSelectedItemIndex();
     if (typeIndex < 0)
         return;
@@ -293,8 +342,17 @@ void EQInfinityAudioProcessorEditor::updateGlobalControlLabels() {
     editTargetBox_.clear(juce::dontSendNotification);
     editTargetBox_.addItemList(labels, 1);
     editTargetBox_.setSelectedItemIndex(juce::jlimit(0, labels.size() - 1, currentIndex), juce::dontSendNotification);
+
+    const bool showEditTarget = mode != util::StereoMode::Stereo;
+    editTargetLabel_.setVisible(showEditTarget);
+    editTargetBox_.setVisible(showEditTarget);
+    editTargetLabel_.setEnabled(showEditTarget);
+    editTargetBox_.setEnabled(showEditTarget);
 }
 
 util::Bank EQInfinityAudioProcessorEditor::getAttachmentBank() const noexcept {
+    if (processor_.params().getStereoMode() == util::StereoMode::Stereo)
+        return util::Bank::A;
+
     return processor_.params().getEditTarget() == util::EditTarget::B ? util::Bank::B : util::Bank::A;
 }

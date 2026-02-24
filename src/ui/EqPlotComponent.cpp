@@ -21,7 +21,7 @@ void EqPlotComponent::setSampleRate(double sampleRate) {
 }
 
 void EqPlotComponent::setSelectedBand(int index) {
-    selectedBandIndex_ = juce::jlimit(0, util::Params::NumBands - 1, index);
+    selectedBandIndex_ = (index >= 0 && index < util::Params::NumBands) ? index : -1;
     repaint();
 }
 
@@ -39,6 +39,8 @@ void EqPlotComponent::paint(juce::Graphics& g) {
     g.fillRoundedRectangle(bounds, 6.0f);
 
     drawGrid(g, bounds);
+    g.saveState();
+    g.reduceClipRegion(bounds.toNearestInt());
     spectrumAnalyzer_.draw(g);
 
     if (!secondaryResponsePath_.isEmpty()) {
@@ -48,6 +50,7 @@ void EqPlotComponent::paint(juce::Graphics& g) {
 
     g.setColour(juce::Colour::fromRGB(118, 227, 255));
     g.strokePath(primaryResponsePath_, juce::PathStrokeType(2.2f, juce::PathStrokeType::curved));
+    g.restoreState();
     drawResponseLegend(g, bounds);
 
     for (int i = 0; i < util::Params::NumBands; ++i) {
@@ -79,12 +82,13 @@ void EqPlotComponent::mouseDown(const juce::MouseEvent& event) {
     // Ensure node hit-testing uses the latest parameter-derived positions.
     rebuildPaths();
 
+    pendingDragBandIndex_ = -1;
     draggingBandIndex_ = -1;
     const int bestIndex = findNearestNode(event.position, 16.0f);
 
     if (bestIndex >= 0) {
         selectedBandIndex_ = bestIndex;
-        draggingBandIndex_ = bestIndex;
+        pendingDragBandIndex_ = bestIndex;
         dragStartPosition_ = event.position;
 
         dragStartFrequencyHz_ = getBandFieldValueForDisplay(bestIndex, BandField::Frequency);
@@ -99,9 +103,13 @@ void EqPlotComponent::mouseDown(const juce::MouseEvent& event) {
         if (bandSelectionCallback_ != nullptr)
             bandSelectionCallback_(bestIndex);
     } else {
-        if (soloActive_ && bandSoloCallback_ != nullptr)
+        if (soloActive_ && bandSoloCallback_ != nullptr && selectedBandIndex_ >= 0)
             bandSoloCallback_(selectedBandIndex_, false);
         soloActive_ = false;
+        selectedBandIndex_ = -1;
+        if (bandSelectionCallback_ != nullptr)
+            bandSelectionCallback_(-1);
+        pendingDragBandIndex_ = -1;
         draggingBandIndex_ = -1;
     }
 
@@ -114,6 +122,8 @@ void EqPlotComponent::mouseDoubleClick(const juce::MouseEvent& event) {
         return;
 
     selectedBandIndex_ = bandIndex;
+    pendingDragBandIndex_ = -1;
+    draggingBandIndex_ = -1;
     if (bandSelectionCallback_ != nullptr)
         bandSelectionCallback_(bandIndex);
 
@@ -122,8 +132,18 @@ void EqPlotComponent::mouseDoubleClick(const juce::MouseEvent& event) {
 }
 
 void EqPlotComponent::mouseDrag(const juce::MouseEvent& event) {
-    if (draggingBandIndex_ < 0)
+    if (draggingBandIndex_ < 0 && pendingDragBandIndex_ < 0)
         return;
+
+    if (draggingBandIndex_ < 0) {
+        constexpr float dragThreshold = 3.0f;
+        if (event.position.getDistanceFrom(dragStartPosition_) < dragThreshold)
+            return;
+
+        draggingBandIndex_ = pendingDragBandIndex_;
+        if (draggingBandIndex_ < 0)
+            return;
+    }
 
     const auto plotBounds = getPlotBounds();
     const juce::Point<float> constrainedPosition{
@@ -159,9 +179,10 @@ void EqPlotComponent::mouseDrag(const juce::MouseEvent& event) {
 }
 
 void EqPlotComponent::mouseUp(const juce::MouseEvent&) {
-    if (soloActive_ && bandSoloCallback_ != nullptr)
+    if (soloActive_ && bandSoloCallback_ != nullptr && selectedBandIndex_ >= 0)
         bandSoloCallback_(selectedBandIndex_, false);
     soloActive_ = false;
+    pendingDragBandIndex_ = -1;
     draggingBandIndex_ = -1;
 }
 
@@ -241,8 +262,12 @@ void EqPlotComponent::rebuildPaths() {
 
     for (int i = 0; i < util::Params::NumBands; ++i) {
         const auto& band = state.bands[static_cast<std::size_t>(i)];
-        const float x = frequencyToX(band.frequencyHz, plotBounds);
-        const float y = usesGainAxis(band.type) ? dbToY(band.gainDb, plotBounds) : dbToY(0.0f, plotBounds);
+        const float rawX = frequencyToX(band.frequencyHz, plotBounds);
+        const float rawY = usesGainAxis(band.type) ? dbToY(band.gainDb, plotBounds) : dbToY(0.0f, plotBounds);
+
+        constexpr float maxNodeRadius = 11.0f;
+        const float x = juce::jlimit(plotBounds.getX() + maxNodeRadius, plotBounds.getRight() - maxNodeRadius, rawX);
+        const float y = juce::jlimit(plotBounds.getY() + maxNodeRadius, plotBounds.getBottom() - maxNodeRadius, rawY);
         nodePositions_[static_cast<std::size_t>(i)] = {x, y};
     }
 
@@ -265,7 +290,8 @@ float EqPlotComponent::xToFrequency(float x, juce::Rectangle<float> bounds) cons
 }
 
 float EqPlotComponent::dbToY(float db, juce::Rectangle<float> bounds) {
-    const float normalized = juce::jmap(db, MaxDb, MinDb, 0.0f, 1.0f);
+    const float clampedDb = juce::jlimit(MinDb, MaxDb, db);
+    const float normalized = juce::jmap(clampedDb, MaxDb, MinDb, 0.0f, 1.0f);
     return bounds.getY() + normalized * bounds.getHeight();
 }
 
